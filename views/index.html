@@ -1,0 +1,231 @@
+<html>
+    <head>
+        <title>CRUD Test</title>
+        <link href="/assets/style.css" rel="stylesheet"> 
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&display=swap" rel="stylesheet"> 
+    </head>
+    <body>
+        <div class="container">
+            <div class="area">
+                <div class="title">
+                    <h4>Desenvolvedores</h4>
+                </div>
+                <div class="card">
+                    <h4 class="card-title">Desenvolvedores</h4>
+                    <label for="filter_nome">Filtros</label>
+                    <div class="filter-bar">
+                        <input id="filter_nome" placeholder="Nome">
+                        <select id="filter_sexo">
+                            <option value="">Selecione</option>
+                            <option value="F">F</option>
+                            <option value="M">M</option>
+                        </select>
+                        <input id="filter_idade" placeholder="Idade">
+                        <select id="page">
+                            <option value="1">Pagina 1</option>
+                            <option value="2">Pagina 2</option>
+                            <option value="3">Pagina 3</option>
+                            <option value="4">Pagina 4</option>
+                            <option value="5">Pagina 5</option>
+                            <option value="6">Pagina 6</option>
+                        </select>
+                    </div>
+                    <table id="developers" class="table">
+                        <thead>
+                            <tr>
+                                <th>id</th>
+                                <th>nome</th>
+                                <th>sexo</th>
+                                <th>idade</th>
+                                <th>aniversario</th>
+                                <th>hobby</th>
+                                <th>acoes</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id='alert-container-list'></div>
+                <div class="card">
+                    <h4 class="card-title">Editar/Criar Desenvolvedor</h4>
+                    <div class="form-group">
+                        <label for="nome">Nome</label>
+                        <input id="nome">
+                    </div>
+                    <div class="form-group">
+                        <label for="sexo">Sexo</label>
+                        <select id="sexo">
+                            <option value="">Selecione</option>
+                            <option value="F">F</option>
+                            <option value="M">M</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="idade">Idade</label>
+                        <input id="idade" type="number">
+                    </div>
+                    <div class="form-group">
+                        <label for="datanascimento">Aniversario</label>
+                        <input id="datanascimento" mask="99/99/9999">
+                    </div>
+                    <div class="form-group">
+                        <label for="hobby">Hobby</label>
+                        <input id="hobby">
+                    </div>
+                    <button id="clear_btn" class="btn btn-danger">Cancelar</button>
+                    <button id="save_btn" class="btn btn-primary">Salvar</button>
+                </div>
+                <div id='alert-container-form'></div>
+            </div>
+        </div>
+    </body>
+    <script src="/assets/util.js"></script>
+    <script>
+        var developerId
+        const fields = document.querySelectorAll('#nome, #sexo, #idade, #datanascimento, #hobby')
+        const filters = document.querySelectorAll('#filter_nome, #filter_sexo, #filter_idade, #page')
+        const listalertContainer = document.getElementById('alert-container-list')
+        const formAlertContainer = document.getElementById('alert-container-form')
+
+        filters.forEach(filter => filter.addEventListener('change', getDevelopers))
+
+        document.getElementById('clear_btn').addEventListener('click', clearForm)
+        document.getElementById('save_btn').addEventListener('click', saveDeveloper)
+
+        maskInput(document.getElementById('datanascimento'))
+
+        function clearAlerts() {
+            listalertContainer.innerHTML = ''
+            formAlertContainer.innerHTML = ''
+        }
+
+        function showAlert(alertContainer, error) {
+            clearAlerts()
+            const errorElement = createElement('div', {
+                className: 'alert',
+                innerHTML: error
+            })
+            errorElement.insertAdjacentHTML('beforeend', 
+                '<button type="button" class="close" onclick="closeAlert(this)">' +
+                '<span aria-hidden="true">&times;</span>' +
+                '</button>'
+            )
+            alertContainer.appendChild(errorElement)
+        }
+
+        function closeAlert(btn) {
+            btn.parentElement.outerHTML = ''
+        }
+
+        function clearForm() {
+            developerId = undefined
+            fields.forEach(field => field.value = '')
+        }
+
+        function fillForm(data) {
+            for(const [ id, value ] of Object.entries(data)) {
+                const field = document.getElementById(id)
+                if(field) field.value = value
+            }
+        }
+
+        async function getDevelopers() {
+            const { filter_nome, filter_sexo, filter_idade, page } = getFormData(filters)
+            const queryStr = toQuery({
+                nome: filter_nome,
+                sexo: filter_sexo,
+                idade: filter_idade,
+                page
+            })
+
+            fetchTableData({
+                route: '/developers?' + queryStr,
+                src: 'affiliates',
+                element: 'developers',
+                emptyMsg: 'Nenhum Desenvolvedor Encontrado',
+                rowProcessor: ({ id, nome, sexo, idade, datanascimento, hobby  }) => {
+                    return [ 
+                        id,
+                        nome,
+                        sexo,
+                        idade,
+                        datanascimento,
+                        hobby,
+                        rowBtns([{
+                            data_id: id,
+                            text: 'Editar',
+                            action: 'edit',
+                            type: 'primary'
+                        },{
+                            data_id: id,
+                            text: 'Excluir',
+                            action: 'delete',
+                            type: 'danger'
+                        }]),
+                    ]
+                },
+                actions: {
+                    async edit(btn) {
+                        const id = btn.getAttribute('data_id')
+                        getDeveloper(id)
+                    },
+                    async delete(btn) {
+                        const id = btn.getAttribute('data_id')
+                        deleteDeveloper(id)
+                    }
+                },
+            })
+        }
+
+        async function getDeveloper(id) {
+            const developer = await (await fetch(`/developers/${id}`)).json()
+            developerId = id
+            fillForm(developer)
+        }
+
+        async function saveDeveloper() {
+            let url, method
+            if(developerId) {
+                url = `/developers/${developerId}`
+                method = 'PUT'
+            } else {
+                url = `/developers`
+                method = 'POST'
+            }
+
+            const data = getFormData(fields)
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            
+            if(response.status == 200 || response.status == 201) {
+                showAlert(formAlertContainer, 'Desenvolvedor salvo')
+                getDevelopers()
+            } else {
+                showAlert(formAlertContainer, 'Nenhum desenvolvedor atualizado')
+            }
+        }
+
+        async function deleteDeveloper(id) {
+            const response = await fetch(`/developers/${id}`, {
+                method: 'DELETE'
+            })
+
+            if(response.status == 204) {
+                showAlert(listalertContainer, 'Desenvolvedor excluido')
+            } else {
+                showAlert(listalertContainer, 'Erro ao excluir')
+            }
+            getDevelopers()
+        }
+
+        getDevelopers()
+    </script>
+</html>
