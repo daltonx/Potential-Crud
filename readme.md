@@ -11,6 +11,9 @@ Teste de CRUD
 	* sequelize-cli
 * Mysql
 
+#### Teste
+Um teste pode ser acessado em [crud.xploit.us](https://crud.xploit.us).
+
 #### Preparo **[DOCKER]**
 
 ##### Build e inicializacao

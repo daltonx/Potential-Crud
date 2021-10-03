@@ -115,6 +115,23 @@
             alertContainer.appendChild(errorElement)
         }
 
+        function clearFieldErrors() {
+            document.querySelectorAll('.form-error').forEach(formGroup => {
+                formGroup.classList.remove('form-error')
+                formGroup.querySelector('.error-label').outerHTML = ''
+            })
+        }
+
+        function showFieldError(field, error) {
+            const formGroup = document.getElementById(field).parentElement
+            formGroup.classList.add('form-error')
+            const errorLabel = createElement('label', {
+                className: 'error-label',
+                innerHTML: error
+            })
+            formGroup.appendChild(errorLabel)
+        }
+
         function closeAlert(btn) {
             btn.parentElement.outerHTML = ''
         }
@@ -196,7 +213,8 @@
             }
 
             const data = getFormData(fields)
-
+            clearFieldErrors()
+            
             const response = await fetch(url, {
                 method,
                 headers: {
@@ -209,7 +227,19 @@
                 showAlert(formAlertContainer, 'Desenvolvedor salvo')
                 getDevelopers()
             } else {
-                showAlert(formAlertContainer, 'Nenhum desenvolvedor atualizado')
+                if(response.headers.get('Content-Type').startsWith('application/json')) {
+                    showAlert(formAlertContainer, 'Verifique os dados inseridos e tente novamente')
+                    const errors = await response.json()
+                    for(const [ field, error ] of Object.entries(errors)) {
+                        showFieldError(field, error)
+                    }
+                } else {
+                    if(developerId) {
+                        showAlert(formAlertContainer, 'Nada atualizado')
+                    } else {
+                        showAlert(formAlertContainer, 'Falha ao salvar')
+                    }
+                }
             }
         }
 

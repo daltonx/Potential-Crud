@@ -17,6 +17,14 @@ h4 {
     margin-bottom: 1rem;
 }
 
+.form-group.form-error input, .form-group.form-error select {
+    border-color: #ff3366;
+}
+
+.error-label {
+    color: #ff3366;
+}
+
 label {
     display: block;
     font-size: 0.875rem;
