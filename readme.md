@@ -11,7 +11,15 @@ Teste de CRUD
 	* sequelize-cli
 * Mysql
 
-#### Preparo
+#### Preparo **[DOCKER]**
+
+##### Build e inicializacao
+```console
+docker compose up
+```
+Na raiz do projeto, o script `docker_migrations.sh` cuida de executar as migracoes de dados apos a inicializacao do mysql(**as cegas**) e antes da inicializacao do app. O script aguarda 30 segundos antes de executar os comandos de migracao do sequelize, para garantir que o mysql ja esteja configurado e em execucao. O **ideal** em um caso como esse eh a execucao de um script que consiga verificar o estado do mysql.
+
+#### Preparo **[MANUAL]**
 **Instalando as dependencias:**
 ```console
 npm i

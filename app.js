@@ -12,5 +12,6 @@ app.use((_, res, next) => {
     next()
 })
 
-app.listen(80, '127.0.0.1')
+app.listen(3000)
+console.log('Potential CRUD RUNNING ON http://localhost:3000')
 exports.app = app
